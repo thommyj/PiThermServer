@@ -19,7 +19,7 @@ var sqlite3 = require('sqlite3');
 var nodestatic = require('node-static');
 
 // Setup static server for current directory
-var staticServer = new nodestatic.Server("./www");
+var staticServer = new nodestatic.Server("./www", {indexFile: "log.htm"});
 
 // Setup database connection for logging
 var db = new sqlite3.Database('./piTemps.db');
