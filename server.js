@@ -24,7 +24,7 @@ var staticServer = new nodestatic.Server(".");
 // Setup database connection for logging
 var db = new sqlite3.Database('./piTemps.db');
 
-var deviceFile;
+var deviceFile = "unknown";
 
 // Write a single temperature record in JSON format to database table.
 function insertTemp(data) {
@@ -160,20 +160,21 @@ var server = http.createServer( function(request, response) {
     }
 });
 
-var devices = fs.readdirSync('/sys/bus/w1/devices/')
-// There should be at least one temp. device and a master, so two files 
-if (devices.length < 2) {
-	sys.error('error: no w1 devices. Is w1-therm and w1-gpio loaded?')
-	process.exit()
-} else if (devices.length > 2) {
-	console.log('warning: more than one w1 device found. Using the first')
-}
 
-//find one that isn't the bus master
+// There should be at least one temp. device and a master, so two files 
+// Find one that isn't the bus master
+var devices = fs.readdirSync('/sys/bus/w1/devices/')
 for (i = 0; i < devices.length; i++) {
     if ( !devices[i].includes("w1_bus_master")) {
 	deviceFile = '/sys/bus/w1/devices/' + devices[0] + '/w1_slave'
     }
+}
+
+if (deviceFile == "unknown") {
+	sys.error('error: no w1 devices. Is w1-therm and w1-gpio loaded?')
+	process.exit()
+} else if (devices.length > 2) {
+	console.log('warning: more than one w1 device found. Using the first')
 }
 
 console.log("using sensor " + deviceFile)
