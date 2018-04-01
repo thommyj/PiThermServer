@@ -24,6 +24,9 @@ var staticServer = new nodestatic.Server(".");
 // Setup database connection for logging
 var db = new sqlite3.Database('./piTemps.db');
 
+var deviceFile;
+
+
 // Write a single temperature record in JSON format to database table.
 function insertTemp(data){
    // data is a javascript object   
@@ -36,7 +39,7 @@ function insertTemp(data){
 
 // Read current temperature from sensor
 function readTemp(callback){
-   fs.readFile('/sys/bus/w1/devices/28-00000400a88a/w1_slave', function(err, buffer)
+   fs.readFile(deviceFile, function(err, buffer)
 	{
       if (err){
          console.error(err);
@@ -166,11 +169,29 @@ var server = http.createServer(
 		}
 });
 
-// Start temperature logging (every 5 min).
-var msecs = (60 * 5) * 1000; // log interval duration in milliseconds
-logTemp(msecs);
+var devices = fs.readdirSync('/sys/bus/w1/devices/')
+// There should be at least one temp. device and a master, so two files 
+if (devices.length < 2) {
+	sys.error('error: no w1 devices. Is w1-therm and w1-gpio loaded?')
+	process.exit()
+} else if (devices.length > 2) {
+	console.log('warning: more than one w1 device found. Using the first')
+}
+
+//find one that isn't the bus master
+for (i = 0; i < devices.length; i++) {
+    if ( !devices[i].includes("w1_bus_master")) {
+	deviceFile = '/sys/bus/w1/devices/' + devices[0] + '/w1_slave'
+    }
+}
+
+console.log("using sensor " + deviceFile)
+
+// interval in ms (every 5 min)
+var interval = (60 * 5) * 1000;
+logTemp(interval, deviceFile);
 // Send a message to console
-console.log('Server is logging to database at '+msecs+'ms intervals');
+console.log('Server is logging to database at ' +interval + 'ms intervals');
 // Enable server
 server.listen(8000);
 // Log message
