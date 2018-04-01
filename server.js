@@ -19,7 +19,7 @@ var sqlite3 = require('sqlite3');
 var nodestatic = require('node-static');
 
 // Setup static server for current directory
-var staticServer = new nodestatic.Server(".");
+var staticServer = new nodestatic.Server("./www");
 
 // Setup database connection for logging
 var db = new sqlite3.Database('./piTemps.db');
@@ -137,8 +137,6 @@ var server = http.createServer( function(request, response) {
         response.writeHead(200, {'Content-Type': 'image/x-icon'});
         response.end();
 
-        // Optionally log favicon requests.
-        //console.log('favicon requested');
         return;
     } else {
         // Print requested file to terminal
