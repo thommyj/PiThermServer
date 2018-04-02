@@ -194,31 +194,66 @@ var server = http.createServer( function(request, response) {
     }
 });
 
+function usageAndQuit() {
+    console.log ("[--port <1-65535>] (default 8000)");
+    console.log ("[--interval <1->] (minutes, default 15min)");
+    process.exit(1);
+}
+
+
+// default, log every 15min, time in ms
+var interval = (60 * 15) * 1000;
+//default, use port 8000
+var port = 8000;
+
+//first argument is name of program
+//so start at 1
+for (i = 1; i < process.argv.length; i++) {
+     var arg = process.argv[i];
+     if (arg == "--port") {
+        i++;
+        arg = process.argv[i];
+        arg = parseInt(process.argv[i]);
+        if (typeof arg == "number" && arg > 0 && arg < 65536) {
+            port = arg;
+        } else {
+            console.log("port argument wrong")
+            usageAndQuit();
+        }
+     } else if (arg == "--interval") {
+        i++;
+        arg = parseInt(process.argv[i]);
+        if (typeof arg == "number" && arg >= 1) {
+            //in ms
+            interval = 60 * arg * 1000;
+        } else {
+            console.log("interval argument wrong")
+            usageAndQuit();
+        }
+    } else if (arg == "-h" || arg == "--help") {
+        usageAndQuit();
+    }
+}
 
 // There should be at least one temp. device and a master, so two files 
 // Find one that isn't the bus master
 var devices = fs.readdirSync('/sys/bus/w1/devices/')
 for (i = 0; i < devices.length; i++) {
     if ( !devices[i].includes("w1_bus_master")) {
-	deviceFile = '/sys/bus/w1/devices/' + devices[0] + '/w1_slave'
+        deviceFile = '/sys/bus/w1/devices/' + devices[0] + '/w1_slave'
     }
 }
 
 if (deviceFile == "unknown") {
-	sys.error('error: no w1 devices. Is w1-therm and w1-gpio loaded?')
-	process.exit()
+    sys.error('error: no w1 devices. Is w1-therm and w1-gpio loaded?')
+    process.exit()
 } else if (devices.length > 2) {
-	console.log('warning: more than one w1 device found. Using the first')
+    console.log('warning: more than one w1 device found. Using the first')
 }
 
 console.log("using sensor " + deviceFile)
 
-// Log every 15min, time in ms
-var interval = (60 * 15) * 1000;
 logTemp(interval, deviceFile);
-// Send a message to console
 console.log('Server is logging to database at ' + interval + 'ms intervals');
-// Enable server
-server.listen(8000);
-// Log message
-console.log('Server running at http://localhost:8000');
+server.listen(port);
+console.log('Server running at http://localhost:' + port);
