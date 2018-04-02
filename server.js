@@ -1,15 +1,17 @@
 // server.js - NodeJS server for the PiThermServer project.
-
 /*
+ * Parses data from DS18B20 temperature sensor and serves as a JSON object.
+ * Uses node-static module to serve a plot of current temperature (uses highcharts).
+ * Should be usable for other 1wire sensors as well, but not tested
+ *
+ * Original author:
+ * Tom Holderness 03/01/2013
+ * Ref: www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/
+ *
+ * Updated by
+ * Thommy Jakobsson thommyj@gmail.com
+ */
 
-Parses data from DS18B20 temperature sensor and serves as a JSON object.
-Uses node-static module to serve a plot of current temperature (uses highcharts).
-
-Tom Holderness 03/01/2013
-Ref: www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/
-*/
-
-// Load node modules
 var fs = require('fs');
 var sys = require('sys');
 var http = require('http');
@@ -18,12 +20,13 @@ var sqlite3 = require('sqlite3');
 // Use node-static module to server chart for client-side dynamic graph
 var nodestatic = require('node-static');
 
-// Setup static server for current directory
+// Setup static server for www directory
 var staticServer = new nodestatic.Server("./www", {indexFile: "log.htm"});
 
 // Setup database connection for logging
 var db = new sqlite3.Database('./piTemps.db');
 
+// Devicefile used for reading temp
 var deviceFile = "unknown";
 
 // Write a single temperature record in JSON format to database table.
@@ -39,29 +42,62 @@ function insertTemp(data) {
 // Read current temperature from sensor
 function readTemp(callback){
     fs.readFile(deviceFile, function(err, buffer) {
+        var crcOk = 0;
+        var temp = NaN;
+
         if (err) {
             console.error(err);
             process.exit(1);
         }
         // Read data from file (using fast node ASCII encoding).
-        var data = buffer.toString('ascii').split(" "); // Split by space
+        var dataRows = buffer.toString('ascii').split("\n");
+        var crcRow = dataRows[0];
+        var dataRow = dataRows[1];
 
-        // Extract temperature from string and divide by 1000 to give celsius
-        var temp  = parseFloat(data[data.length-1].split("=")[1])/1000.0;
+	// Just to be sure, check that we got a string with right size,
+        // it could be corrupt
+        if (typeof crcRow == "string" && crcRow.length > 2) {
+            // If the crc checks out we should have a "YES" in the end
+            // of the first string. If its wrong the kernel will write
+            // NO, but we will treat anything besides YES as an error
+            crcOk = crcRow.substr(-3) == "YES";
+        }
 
-        // Round to one decimal place
-        temp = Math.round(temp * 10) / 10;
+        if (typeof dataRow == "string") {
 
-        // Add date/time to temperature
-        var data = {
-            temperature_record:[{
-                unix_time: Date.now(),
-                celsius: temp
-            }]
-        };
+            // Extract temperature from string and divide by 1000 to give celsius
+            // Temp is at the end of the second row, prepended with "t="
+            temp  = parseFloat(dataRow.split("=")[1])/1000.0;
 
-        // Execute call back with data
-        callback(data);
+            // Round to one decimal place
+            temp = Math.round(temp * 10) / 10;
+        }
+
+	// DS18b20 is 12bit 2comp, 4 of them below the radix point
+	// => max = 2^7-1+1-2^-4~127.94
+        // => min = -2^7=-128
+        // precision can be decreased (and other family members has
+        // lower precision), but its only the lower bits that change.
+        // So for a sanity check this should be good enough
+        // Note that anything below -55 or above 125 is out of spec for
+        // the sensor, so outside that and you will probably break it =)
+        if (crcOk && typeof temp == "number" && temp < 128 && temp >= -128) {
+            // Add date/time to temperature
+            var data = {
+                temperature_record:[{
+                    unix_time: Date.now(),
+                    celsius: temp
+                }]
+            };
+
+            // Execute call back with data
+            callback(data);
+        } else {
+            console.log("Something went wrong! Not storing data");
+            console.log("temp: " + temp + "crc ok:" + crcOk);
+            console.log("Raw data: ");
+            console.log(buffer.toString('ascii'));
+        }
     });
 };
 
