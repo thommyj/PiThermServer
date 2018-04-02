@@ -213,8 +213,8 @@ if (deviceFile == "unknown") {
 
 console.log("using sensor " + deviceFile)
 
-// Log every 5min, time in ms
-var interval = (60 * 5) * 1000;
+// Log every 15min, time in ms
+var interval = (60 * 15) * 1000;
 logTemp(interval, deviceFile);
 // Send a message to console
 console.log('Server is logging to database at ' + interval + 'ms intervals');
