@@ -79,21 +79,20 @@
 
                     xAxis: {
                         type: 'datetime',
-                        tickPixelInterval: 150,
-                         maxZoom: 20 * 1000,
-                         title: {
+                        tickPixelInterval: 100,
+                        title: {
                             text: 'Time',
-                            margin: 15
-                         }
+                        },
+                        lineWidth: 2,
+                        lineColor: '#aaaaaa'
                     },
                     yAxis: {
-                        minPadding: 0.2,
-                        maxPadding: 0.2,
-                        showFirstLabel: false,
                         title: {
                             text: 'Temperature \u00B0C',
-                            margin: 15
-                        }
+                        },
+                        minorTickInterval: 'auto',
+                        gridLineWidth: 2,
+                        gridLineColor: '#aaaaaa'
                     },
                     plotOptions: {
                         line: {
@@ -117,6 +116,6 @@
         </script>
     </head>
     <body>
-        <div id="container" style="width: 100%; height: 400px"></div>
+        <div id="container" style="width: 95%; height: 600px"></div>
     </body>
 </html>
