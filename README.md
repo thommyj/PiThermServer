@@ -2,6 +2,7 @@ PiThermServer
 =============
 
 Simple NodeJS server and SQLite3 logger for the DS18B20 digital temperature sensor on the Raspberry Pi.
+
 Original author: Tomas Holderness http://www.cl.cam.ac.uk/freshers/raspberrypi/tutorials/temperature/
 
 Description
@@ -33,4 +34,4 @@ Install/Setup
 
 Screenshots/Images
 ------------------
-![screenshot](images/screenshoot.png)
+![screenshot](/images/screenshot.png)
