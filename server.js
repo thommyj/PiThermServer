@@ -28,6 +28,7 @@ var db = new sqlite3.Database('./piTemps.db');
 
 // Devicefile used for reading temp
 var deviceFile = "unknown";
+var currentTemp = NaN;
 
 // Write a single temperature record in JSON format to database table.
 function insertTemp(data) {
@@ -89,7 +90,7 @@ function readTemp(callback){
                     celsius: temp
                 }]
             };
-
+            currentTemp = temp;
             // Execute call back with data
             callback(data);
         } else {
@@ -123,7 +124,7 @@ function selectTemp(num_records, start_date, callback){
                         console.log('Error serving querying database. ' + err);
                         return;
                     }
-                    data = {temperature_record:[rows]}
+                    data = {temperature_record:[rows], current:currentTemp};
                     callback(data);
                 });
 };

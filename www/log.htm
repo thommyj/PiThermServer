@@ -24,7 +24,8 @@
                        series.data.push([data.temperature_record[0][i].unix_time, data.temperature_record[0][i].celsius]);
                        i++;
                     }
-                 chart.addSeries(series);
+                    chart.addSeries(series);
+                    chart.setTitle({text: 'Outside temp (' + data.current + '\u00B0C)'});
                  });
             }
         </script>
@@ -68,10 +69,6 @@
                         spaceRight: 20,
                         events: {load: getData() }
                     },
-                    title: {
-                        text: 'Outside temp'
-                    },
-
                     xAxis: {
                         type: 'datetime',
                         tickPixelInterval: 100,
@@ -111,6 +108,6 @@
         </script>
     </head>
     <body>
-        <div id="container" style="width: 95%; height: 600px"></div>
+        <div id="container" style="width: 95%; height: 500px"></div>
     </body>
 </html>
